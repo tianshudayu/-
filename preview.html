@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>未来科技个人实验室 - 实时仪表盘</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --primary: #7c3aed;
+            --secondary: #3b82f6;
+            --bg-dark: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            background: radial-gradient(circle at top right, rgba(124, 58, 237, 0.15), transparent),
+                        radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.15), transparent);
+        }
+
+        /* 动态背景背景 */
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            filter: blur(80px);
+            opacity: 0.6;
+        }
+
+        .blob {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: move 20s infinite alternate;
+        }
+
+        @keyframes move {
+            from { transform: translate(-10%, -10%); }
+            to { transform: translate(100%, 80%); }
+        }
+
+        /* 布局 */
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+            padding: 24px;
+            gap: 24px;
+        }
+
+        /* 侧边栏 */
+        aside {
+            width: 280px;
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, #fff 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        nav li {
+            padding: 12px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-dim);
+            transition: all 0.3s ease;
+        }
+
+        nav li:hover, nav li.active {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        /* 主体内容 */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            border: 2px solid var(--border);
+        }
+
+        /* 网格卡片 */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 24px;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .stat-label {
+            color: var(--text-dim);
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .chart-placeholder {
+            height: 120px;
+            width: 100%;
+            margin-top: 20px;
+            background: linear-gradient(90deg, transparent 0%, rgba(124, 58, 237, 0.1) 50%, transparent 100%);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-placeholder::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary);
+            box-shadow: 0 0 15px var(--primary);
+        }
+
+        /* 大型活动卡片 */
+        .wide-card {
+            grid-column: span 2;
+        }
+
+        .weather-card {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(124, 58, 237, 0.2));
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* 按钮样式 */
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(124, 58, 237, 0.3);
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            box-shadow: 0 10px 15px -3px rgba(124, 58, 237, 0.4);
+        }
+
+        /* 入场动画 */
+        .fade-in {
+            animation: fadeIn 0.8s ease forwards;
+            opacity: 0;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .wide-card { grid-column: auto; }
+            aside { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="animated-bg">
+        <div class="blob"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- 侧边栏 -->
+        <aside class="fade-in" style="animation-delay: 0.1s;">
+            <div class="logo">
+                <i data-lucide="zap"></i>
+                <span>ANTIGRAVITY</span>
+            </div>
+            <nav>
+                <ul>
+                    <li class="active"><i data-lucide="layout-dashboard"></i> 控制面板</li>
+                    <li><i data-lucide="layers"></i> 项目管理</li>
+                    <li><i data-lucide="message-square"></i> 团队协作</li>
+                    <li><i data-lucide="calendar"></i> 计划安排</li>
+                    <li><i data-lucide="settings"></i> 系统设置</li>
+                </ul>
+            </nav>
+            <div style="margin-top: auto;">
+                <button class="btn-primary" style="width: 100%;">部署新服务</button>
+            </div>
+        </aside>
+
+        <!-- 主内容 -->
+        <main>
+            <header class="fade-in" style="animation-delay: 0.2s;">
+                <div>
+                    <h1 id="greeting">下午好, 开发者</h1>
+                    <p style="color: var(--text-dim);">欢迎回到您的数字化实验室。</p>
+                </div>
+                <div class="user-info">
+                    <div style="text-align: right;">
+                        <div id="clock" style="font-weight: 600;">--:--:--</div>
+                        <div style="font-size: 12px; color: var(--text-dim);">2026年1月20日</div>
+                    </div>
+                    <div class="avatar"></div>
+                </div>
+            </header>
+
+            <div class="dashboard-grid">
+                <!-- 统计卡片 1 -->
+                <div class="card fade-in" style="animation-delay: 0.3s;">
+                    <div class="stat-label">服务器负载</div>
+                    <div class="stat-value">24.5%</div>
+                    <p style="color: #10b981; font-size: 12px; margin-top: 4px;">↓ 3.2% 较昨日</p>
+                    <div class="chart-placeholder"></div>
+                </div>
+
+                <!-- 统计卡片 2 -->
+                <div class="card fade-in" style="animation-delay: 0.4s;">
+                    <div class="stat-label">活跃用户数</div>
+                    <div class="stat-value">1,284</div>
+                    <p style="color: var(--primary); font-size: 12px; margin-top: 4px;">↑ 12.5% 较今日</p>
+                    <div class="chart-placeholder"></div>
+                </div>
+
+                <!-- 统计卡片 3 -->
+                <div class="card fade-in" style="animation-delay: 0.5s;">
+                    <div class="stat-label">系统内存使用</div>
+                    <div class="stat-value">4.2 GB</div>
+                    <p style="color: var(--secondary); font-size: 12px; margin-top: 4px;">正常运行中</p>
+                    <div class="chart-placeholder"></div>
+                </div>
+
+                <!-- 天气/通知卡片 -->
+                <div class="card wide-card weather-card fade-in" style="animation-delay: 0.6s;">
+                    <div>
+                        <h2 style="font-size: 24px; margin-bottom: 8px;">系统同步完成</h2>
+                        <p style="color: rgba(255,255,255,0.7);">所有节点已接入并完成状态校验，当前网络延迟: 12ms。</p>
+                    </div>
+                    <i data-lucide="cloud-lightning" style="width: 64px; height: 64px; color: #fbbf24;"></i>
+                </div>
+
+                <!-- 任务卡片 -->
+                <div class="card fade-in" style="animation-delay: 0.7s;">
+                    <h3 style="margin-bottom: 16px;">待办事项</h3>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px;">
+                        <li style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
+                            <input type="checkbox" checked> 优化后端 API 响应
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
+                            <input type="checkbox"> 编写测试文档
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 8px; font-size: 14px;">
+                            <input type="checkbox"> 准备项目演示预览
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 初始化图标
+        lucide.createIcons();
+
+        // 实时时钟
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('zh-CN', { hour12: false });
+            document.getElementById('clock').textContent = timeString;
+            
+            // 问候语
+            const hour = now.getHours();
+            const greeting = document.getElementById('greeting');
+            if (hour < 12) greeting.textContent = "早上好, 开发者";
+            else if (hour < 18) greeting.textContent = "下午好, 开发者";
+            else greeting.textContent = "晚上好, 开发者";
+        }
+
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // 简单的交互：卡片点击反馈
+        document.querySelectorAll('.card').forEach(card => {
+            card.addEventListener('click', () => {
+                card.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    card.style.transform = '';
+                }, 100);
+            });
+        });
+    </script>
+</body>
+</html>
